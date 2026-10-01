@@ -16,7 +16,7 @@ const CORNERS = [0, 896, 2304, 3200]; // 256 px cadascuna
 
 const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 
-// Paràmetres per URL: ?anim=0 (quadrats quiets)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE
+// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE
 //                     ?seconds=10 (durada de cada pantalla)  ?guides=1  ?refresh=20
 const params = new URLSearchParams(location.search);
 const PINNED = Number(params.get('scene')) || 0;
@@ -47,12 +47,12 @@ function zone(cls, x, w) {
 // Quadrats de les cantonades: canvas de 256 px d'ample, 6 columnes de 42,67 px
 // (= 128 px / 3, encaixa amb les columnes de 128 px del LED). Les vores
 // s'arrodoneixen a píxel sencer perquè no apareguin línies entre quadrats.
-// Animació: cada quadrat s'encén i s'apaga amb un fos suau, a ritmes diferents.
+// Per defecte estàtics; amb ?anim=1 cada quadrat s'encén i s'apaga amb un fos suau.
 // ---------------------------------------------------------------------------
 const COLS = 6;
 const CELL = 256 / COLS;
 const FADE = 0.6; // segons que dura l'encesa / apagada d'un quadrat
-const ANIMATE = params.get('anim') !== '0';
+const ANIMATE = params.get('anim') === '1'; // per defecte estàtic
 const edge = (i) => Math.round(i * CELL);
 const corners = new Set();
 
