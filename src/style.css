@@ -14,7 +14,7 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
   overflow: hidden;
   background: var(--bg);
   color: var(--white);
-  font-family: 'Barlow', sans-serif;
+  font-family: 'Saira Extra Condensed', sans-serif;
   transform-origin: 0 0;
 }
 
@@ -43,35 +43,35 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 /* ---------- Escena 2: marcador ---------- */
 .score-face .label {
   position: absolute; top: 34px; left: 0; right: 0; text-align: center;
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 500; font-size: 30px; letter-spacing: 0.04em;
+  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; font-size: 30px; letter-spacing: 0.04em;
 }
 .score-face .team-logo { position: absolute; top: 50%; transform: translateY(-50%); object-fit: contain; z-index: 1; }
 .score-face .row {
   position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-48%);
   display: flex; align-items: center; justify-content: center; gap: 0.12em; z-index: 2;
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; line-height: 1;
+  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 700; line-height: 1;
 }
 .score-face .pts { text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35); font-variant-numeric: tabular-nums; }
 .score-face .vs {
   width: 0.24em; height: 0.24em; border-radius: 50%; background: var(--green);
   display: flex; align-items: center; justify-content: center;
-  font-family: 'Barlow', sans-serif; font-weight: 500; margin: 0 0.15em;
+  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; margin: 0 0.15em;
 }
 /* La mida del cercle surt del font-size del marcador; la "v" va a part */
 .score-face .vs span { font-size: 0.14em; line-height: 1; }
 
 /* ---------- Escena 3: MVP ---------- */
 .mvp-face .text { position: absolute; top: 34px; z-index: 2; }
-.mvp-face .kicker { font-family: 'Barlow Condensed', sans-serif; font-weight: 500; letter-spacing: 0.03em; }
+.mvp-face .kicker { font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; letter-spacing: 0.03em; }
 .mvp-face .name {
-  font-family: 'Barlow Condensed', sans-serif; font-weight: 700; text-transform: uppercase;
+  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 700; text-transform: uppercase;
   line-height: 0.95; white-space: nowrap; margin-top: 8px;
 }
 .mvp-face .stats { position: absolute; z-index: 2; display: grid; }
 .mvp-face .stat { padding: 10px 22px 10px 0; }
 .mvp-face .stat + .stat { padding-left: 22px; border-left: 1px solid rgba(255, 255, 255, 0.35); }
 .mvp-face .stat .k { font-size: 0.42em; font-weight: 400; margin-bottom: 4px; }
-.mvp-face .stat .v { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; }
+.mvp-face .stat .v { font-family: 'Saira Extra Condensed', sans-serif; font-weight: 600; font-variant-numeric: tabular-nums; }
 .mvp-face .photo { position: absolute; top: 0; object-fit: cover; object-position: top center; z-index: 1; }
 
 /* Cares curtes: estadístiques en 2×2 */
