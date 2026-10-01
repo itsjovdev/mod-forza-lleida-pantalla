@@ -1,5 +1,5 @@
 {
   "rewrites": [
-    { "source": "/fz-storage/:path*", "destination": "https://fzlleida.dev6.bigbangfood.es/storage/:path*" }
+    { "source": "/api/acb/:path*", "destination": "/api/acb?p=:path*" }
   ]
 }

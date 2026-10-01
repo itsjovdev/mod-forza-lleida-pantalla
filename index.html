@@ -4,21 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MOD · Cub Forza Lleida</title>
-    <style>
-      html, body { margin: 0; padding: 0; overflow: hidden; background: #000; }
-      #stage { position: relative; width: 100vw; aspect-ratio: 4608 / 640; }
-      #stage canvas { display: block; width: 100%; height: 100%; }
-      #guides { position: absolute; inset: 0; pointer-events: none; display: none; }
-      #guides.on { display: block; }
-      #guides div {
-        position: absolute; top: 0; bottom: 0; box-sizing: border-box;
-        border-left: 2px dashed rgba(255, 80, 80, .9);
-        font: 600 14px/1.2 system-ui, sans-serif; color: #ff5050; padding: 4px 6px;
-      }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500&display=block" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
   </head>
   <body>
+    <!-- Llenç del cub: 4608 × 640 px (s'escala a l'amplada de la finestra; a OBS queda 1:1) -->
     <div id="stage">
+      <section class="scene" id="scene-logo"></section>
+      <section class="scene" id="scene-score"></section>
+      <section class="scene" id="scene-mvp"></section>
       <div id="guides"></div>
     </div>
     <script type="module" src="/src/main.js"></script>
