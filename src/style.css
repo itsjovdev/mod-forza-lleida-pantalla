@@ -2,7 +2,6 @@
   --bg: #12146b;
   --white: #ffffff;
   --green: #1fa64a;
-  --cell: calc(256px / 6); /* quadrats de les cantonades: 6 columnes per cantonada */
 }
 
 html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
@@ -25,9 +24,7 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .face, .corner { position: absolute; top: 0; height: 640px; overflow: hidden; }
 
 /* ---------- Quadrats de les cantonades ---------- */
-.pixels { position: absolute; left: 0; top: 0; width: 256px; display: grid; grid-template-columns: repeat(6, var(--cell)); grid-auto-rows: var(--cell); }
-.pixels i { display: block; }
-.pixels i.on { background: var(--white); }
+.pixels { position: absolute; left: 0; top: 0; display: block; }
 
 .presented {
   position: absolute; left: 0; right: 0; bottom: 40px;

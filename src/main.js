@@ -16,7 +16,7 @@ const CORNERS = [0, 896, 2304, 3200]; // 256 px cadascuna
 
 const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 
-// Paràmetres per URL: ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE
+// Paràmetres per URL: ?anim=0 (quadrats quiets)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE
 //                     ?seconds=10 (durada de cada pantalla)  ?guides=1  ?refresh=20
 const params = new URLSearchParams(location.search);
 const PINNED = Number(params.get('scene')) || 0;
@@ -43,14 +43,76 @@ function zone(cls, x, w) {
   return el('div', { className: cls, style: { left: px(x), width: px(w) } });
 }
 
-// Patró de quadrats determinista per a cada cantonada
+// ---------------------------------------------------------------------------
+// Quadrats de les cantonades: canvas de 256 px d'ample, 6 columnes de 42,67 px
+// (= 128 px / 3, encaixa amb les columnes de 128 px del LED). Les vores
+// s'arrodoneixen a píxel sencer perquè no apareguin línies entre quadrats.
+// Animació: cada quadrat s'encén i s'apaga amb un fos suau, a ritmes diferents.
+// ---------------------------------------------------------------------------
+const COLS = 6;
+const CELL = 256 / COLS;
+const FADE = 0.6; // segons que dura l'encesa / apagada d'un quadrat
+const ANIMATE = params.get('anim') !== '0';
+const edge = (i) => Math.round(i * CELL);
+const corners = new Set();
+
 function pixelPattern(seed, rows, density) {
   let s = seed * 9301 + 49297;
   const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
-  const grid = el('div', { className: 'pixels' });
-  for (let i = 0; i < rows * 6; i++) grid.append(el('i', { className: rnd() < density ? 'on' : '' }));
-  return grid;
+  const canvas = el('canvas', { className: 'pixels', width: 256, height: edge(rows) });
+  const cells = [];
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const on = rnd() < density;
+      cells.push({
+        x: edge(c), y: edge(r), w: edge(c + 1) - edge(c), h: edge(r + 1) - edge(r),
+        on, v: on ? 1 : 0, next: 0.5 + rnd() * 4,
+      });
+    }
+  }
+  const p = { canvas, ctx: canvas.getContext('2d'), cells, density };
+  corners.add(p);
+  drawPixels(p);
+  return canvas;
 }
+
+function drawPixels(p) {
+  const { ctx, canvas, cells } = p;
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.fillStyle = '#fff';
+  for (const c of cells) {
+    if (c.v <= 0) continue;
+    ctx.globalAlpha = c.v * c.v * (3 - 2 * c.v); // smoothstep: fos suau
+    ctx.fillRect(c.x, c.y, c.w, c.h);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function updatePixels(p, dt) {
+  for (const c of p.cells) {
+    c.next -= dt;
+    if (c.next <= 0) {
+      c.on = Math.random() < p.density; // manté aproximadament la mateixa densitat
+      c.next = 1.2 + Math.random() * 3.5;
+    }
+    const target = c.on ? 1 : 0;
+    if (c.v !== target) c.v = c.on ? Math.min(1, c.v + dt / FADE) : Math.max(0, c.v - dt / FADE);
+  }
+}
+
+let lastFrame = performance.now();
+function animatePixels(now) {
+  const dt = Math.min(0.1, (now - lastFrame) / 1000);
+  lastFrame = now;
+  for (const p of corners) {
+    if (!p.canvas.isConnected) { corners.delete(p); continue; }
+    if (!p.canvas.closest('.scene.on')) continue; // només es dibuixa la pantalla visible
+    updatePixels(p, dt);
+    drawPixels(p);
+  }
+  requestAnimationFrame(animatePixels);
+}
+if (ANIMATE) requestAnimationFrame(animatePixels);
 
 function presentedBy() {
   return el('div', { className: 'presented' }, 'Presentat per:', el('img', { src: MOD_LOGO, alt: 'MOD' }));
