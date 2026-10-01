@@ -1,7 +1,7 @@
 // ---------------------------------------------------------------------------
 // Cub LED Força Lleida · 4608 × 640 px · seqüència de 3 pantalles de 10 s:
 //   1) Logo MOD (estàtic)   2) Marcador del partit   3) Jugador més valorat
-// Dades: ACB Open API Live via /api/acb (proxy amb el token al servidor).
+// Dades: /api/screen (funció de Vercel que consulta l'ACB Open API Live amb el token al servidor).
 // ---------------------------------------------------------------------------
 const W = 4608;
 const H = 640;
@@ -14,9 +14,6 @@ const FACES = [
 ];
 const CORNERS = [0, 896, 2304, 3200]; // 256 px cadascuna
 
-const TEAM_ID = 4465; // iLERNA Lleida
-const PHOTO_BODY = (idLicense) =>
-  `https://fzlleida.dev6.bigbangfood.es/storage/players/men/photo_body/${idLicense}.webp`;
 const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 
 // Paràmetres per URL: ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE
@@ -179,81 +176,34 @@ function renderMvpScene(mvp) {
 }
 
 // ---------------------------------------------------------------------------
-// Dades de l'API
+// Dades: una sola crida petita a /api/screen (el servidor parla amb l'ACB).
+// Les últimes dades es guarden al navegador per pintar a l'instant en recarregar.
 // ---------------------------------------------------------------------------
-async function api(path, query) {
-  const res = await fetch(`/api/acb/${path}?${new URLSearchParams(query)}`);
-  if (!res.ok) throw new Error(`${path}: HTTP ${res.status}`);
-  return res.json();
-}
-
-function teamInfo(team) {
-  const media = team?.media?.length ? team.media : team?.club?.media ?? [];
-  const pick = (type) => media.find((m) => m.type === type)?.url;
-  return { name: team?.team_actual_short_name ?? '', logo: pick('logo_negativo') ?? pick('logo') };
-}
-
-// Partit en directe; si no n'hi ha, l'últim finalitzat; si no, el proper.
-function pickMatch(list) {
-  const byDate = [...list].sort((a, b) => b.date - a.date);
-  return (
-    byDate.find((m) => m.live && !m.finalized) ??
-    byDate.find((m) => m.finalized) ??
-    [...byDate].reverse().find((m) => !m.finalized)
-  );
-}
-
-function statusLabel(m) {
-  if (m.finalized) return 'FINAL';
-  if (!m.live) return 'PRÒXIM PARTIT';
-  if (m.period === 2 && !m.crono) return 'MEDIA PARTE';
-  if (m.period > 4) return 'PRÒRROGA';
-  return `${m.period}r QUART`;
-}
-
-function buildMvp(rows) {
-  const players = rows.filter((r) => r.license && r.id_team === TEAM_ID);
-  if (!players.length) return null;
-  const best = players.reduce((a, b) => (b.val > a.val || (b.val === a.val && b.points > a.points) ? b : a));
-  const [first, ...rest] = (best.license.licenseStr15 || best.license.licenseStr).trim().split(/\s+/);
-  const made = best['2pt_success'] + best['3pt_success'];
-  const tried = best['2pt_tried'] + best['3pt_tried'];
-  return {
-    first, last: rest.join(' '),
-    pts: String(best.points), ast: String(best.asis), reb: String(best.total_rebound),
-    fg: tried ? `${(Math.round((made / tried) * 1000) / 10).toFixed(1)}%` : '0%',
-    photo: PHOTO_BODY(best.id_license),
-    photoFallback: best.license.media?.find((m) => m.type === 'foto_cuerpo')?.url,
-  };
-}
-
+const STORE_KEY = 'cub:screen:' + (params.get('match') || 'auto');
 let lastKey = '';
+
+function preload(urls) {
+  for (const u of urls) if (u) { const i = new Image(); i.decoding = 'async'; i.src = u; }
+}
+
+function apply(data) {
+  const key = JSON.stringify(data);
+  if (key === lastKey) return; // només es redibuixa si han canviat les dades
+  lastKey = key;
+  const game = { ...data.game, label: params.get('label') ?? data.game.label };
+  preload([game.lleida?.logo, game.rival?.logo, data.mvp?.photo]);
+  renderScoreScene(game);
+  renderMvpScene(data.mvp);
+}
+
 async function refresh() {
   try {
-    const list = await api('Matches', { idTeam: TEAM_ID });
-    const m = params.get('match') ? list.find((x) => String(x.id) === params.get('match')) : pickMatch(list);
-    if (!m) throw new Error('No s\'ha trobat cap partit');
-
-    const lleidaLocal = m.id_team_local === TEAM_ID;
-    const game = {
-      label: params.get('label') ?? statusLabel(m),
-      lleida: teamInfo(lleidaLocal ? m.local_team : m.visitor_team),
-      rival: teamInfo(lleidaLocal ? m.visitor_team : m.local_team),
-      lleidaPts: lleidaLocal ? m.score_local : m.score_visitor,
-      rivalPts: lleidaLocal ? m.score_visitor : m.score_local,
-    };
-    const rows = await api('Boxscore/playermatchstatistics', {
-      idCompetition: m.id_competition, idEdition: m.id_edition, idMatch: m.id, idTeam: TEAM_ID,
-    });
-    const mvp = buildMvp(rows);
-
-    // Només es redibuixa si han canviat les dades
-    const key = JSON.stringify([game, mvp]);
-    if (key !== lastKey) {
-      lastKey = key;
-      renderScoreScene(game);
-      renderMvpScene(mvp);
-    }
+    const q = params.get('match') ? `?match=${encodeURIComponent(params.get('match'))}` : '';
+    const res = await fetch('/api/screen' + q);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    apply(data);
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch {}
   } catch (err) {
     console.error('[cub] Error carregant dades:', err);
   }
@@ -279,8 +229,11 @@ function showScene(i) { scenes.forEach((s, k) => s.classList.toggle('on', k === 
 renderLogoScene();
 renderScoreScene(null);
 renderMvpScene(null);
-document.fonts.ready.then(() => { lastKey = ''; refresh(); });
+try { const cached = localStorage.getItem(STORE_KEY); if (cached) apply(JSON.parse(cached)); } catch {}
+refresh();
 setInterval(refresh, REFRESH_SECONDS * 1000);
+// Quan arriben les fonts, reajusta els noms llargs
+document.fonts.ready.then(() => { const d = lastKey; lastKey = ''; if (d) apply(JSON.parse(d)); });
 
 const start = performance.now();
 function tick() {

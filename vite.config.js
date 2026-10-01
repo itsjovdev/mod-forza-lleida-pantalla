@@ -1,21 +1,33 @@
 import { defineConfig, loadEnv } from 'vite';
+import { getScreenData } from './api/_lib/screen.js';
 
-// En local, /api/acb fa el mateix que la funció de Vercel (api/acb.js): afegeix el token
-// (ACB_TOKEN de .env.local) i reenvia a l'ACB Open API Live.
+// En local, /api/screen fa el mateix que la funció de Vercel (api/screen.js),
+// amb el token de .env.local (ACB_TOKEN).
+function screenApi(token) {
+  const handler = async (req, res) => {
+    const match = new URL(req.url, 'http://x').searchParams.get('match');
+    try {
+      const data = await getScreenData({ token, match });
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify(data));
+    } catch (err) {
+      res.statusCode = 500;
+      res.setHeader('Content-Type', 'application/json');
+      res.end(JSON.stringify({ error: err.message }));
+    }
+  };
+  return {
+    name: 'screen-api',
+    configureServer(server) { server.middlewares.use('/api/screen', handler); },
+    configurePreviewServer(server) { server.middlewares.use('/api/screen', handler); },
+  };
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  const acbProxy = {
-    '/api/acb': {
-      target: 'https://api2.acb.com',
-      changeOrigin: true,
-      rewrite: (p) => p.replace(/^\/api\/acb\//, '/api/v1/openapilive/'),
-      headers: { Authorization: env.ACB_TOKEN ?? '' },
-    },
-  };
   return {
     base: './',
     build: { target: 'es2022' },
-    server: { proxy: acbProxy },
-    preview: { proxy: acbProxy },
+    plugins: [screenApi(env.ACB_TOKEN)],
   };
 });
