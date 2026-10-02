@@ -21,8 +21,9 @@ const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 const params = new URLSearchParams(location.search);
 const PINNED = Number(params.get('scene')) || 0;
 const SCENE_SECONDS = Number(params.get('seconds')) || 10;
-// Aquest enllaç és el del primer temps: el títol del marcador és fix
-const HALF_LABEL = 'PRIMER TIEMPO';
+// Cada enllaç té el seu títol fix: /  → primer temps · /final → final del partit
+const PART = document.body.dataset.part || 'first';
+const HALF_LABEL = PART === 'final' ? 'FINAL' : 'PRIMER TIEMPO';
 const REFRESH_SECONDS = Number(params.get('refresh')) || 20;
 
 const stage = document.getElementById('stage');
@@ -243,7 +244,7 @@ function renderMvpScene(mvp) {
 // Dades: una sola crida petita a /api/screen (el servidor parla amb l'ACB).
 // Les últimes dades es guarden al navegador per pintar a l'instant en recarregar.
 // ---------------------------------------------------------------------------
-const STORE_KEY = 'cub:screen:' + (params.get('match') || 'auto');
+const STORE_KEY = `cub:screen:${PART}:` + (params.get('match') || 'auto');
 let lastKey = '';
 
 function preload(urls) {

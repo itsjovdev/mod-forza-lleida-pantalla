@@ -26,8 +26,12 @@ function screenApi(token) {
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   return {
-    base: './',
-    build: { target: 'es2022' },
+    base: '/',
+    build: {
+      target: 'es2022',
+      // Dues pàgines: / (primer temps) i /final (final del partit)
+      rollupOptions: { input: { main: 'index.html', final: 'final/index.html' } },
+    },
     plugins: [screenApi(env.ACB_TOKEN)],
   };
 });
