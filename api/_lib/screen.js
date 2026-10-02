@@ -62,6 +62,31 @@ function sumPeriods(periodRows) {
   return [...byPlayer.values()];
 }
 
+// Estadístiques d'equip (suma dels períodes demanats) → { lleida, rival } amb el que pinta la taula del marcador
+const TEAM_KEYS = ['2pt_success', '2pt_tried', '3pt_success', '3pt_tried', '1pt_success', '1pt_tried',
+  'total_rebound', 'offensive_rebound', 'defensive_rebound', 'asis'];
+
+function buildTeamStats(periodRows) {
+  const byTeam = new Map();
+  for (const rows of periodRows) {
+    for (const r of rows) {
+      const acc = byTeam.get(r.id_team) ?? Object.fromEntries(TEAM_KEYS.map((k) => [k, 0]));
+      for (const k of TEAM_KEYS) acc[k] += r[k] ?? 0;
+      byTeam.set(r.id_team, acc);
+    }
+  }
+  const shape = (a) => a && ({
+    fg: [a['2pt_success'] + a['3pt_success'], a['2pt_tried'] + a['3pt_tried']],
+    p2: [a['2pt_success'], a['2pt_tried']],
+    p3: [a['3pt_success'], a['3pt_tried']],
+    ft: [a['1pt_success'], a['1pt_tried']],
+    reb: a.total_rebound, oreb: a.offensive_rebound, dreb: a.defensive_rebound, ast: a.asis,
+  });
+  const lleida = shape(byTeam.get(TEAM_ID));
+  const rival = shape([...byTeam.entries()].find(([id]) => id !== TEAM_ID)?.[1]);
+  return lleida && rival ? { lleida, rival } : null;
+}
+
 // MVP = jugador del Lleida amb més "val" (en cas d'empat, més punts)
 function buildMvp(players) {
   if (!players.length) return null;
@@ -163,15 +188,21 @@ export async function getScreenData({ token, match, part = 'first' }) {
   let rivalPts = lleidaLocal ? m.score_visitor : m.score_local;
   let players;
   let shotRows = [];
+  let teamRows = [];
+  const teamBox = (period) => acb(token, 'Boxscore/teammatchstatistics', {
+    idCompetition: m.id_competition, idEdition: m.id_edition, idMatch: m.id, ...(period ? { period } : {}),
+  }).catch(() => []);
   const shotsRows = (period) => acb(token, 'PlayByPlay/shotsbreakdown', { idMatch: m.id, ...(period ? { period } : {}) });
 
   if (part === 'first') {
     // Estadístiques i marcador només dels quarts 1 i 2
-    const [q1, q2, detail, s1, s2] = await Promise.all([
+    const [q1, q2, detail, s1, s2, t1, t2] = await Promise.all([
       box(1), box(2), acb(token, 'Matches/match', { idMatch: m.id }),
       shotsRows(1).catch(() => []), shotsRows(2).catch(() => []),
+      teamBox(1), teamBox(2),
     ]);
     shotRows = [...s1, ...s2];
+    teamRows = [t1, t2];
     players = sumPeriods([q1, q2]);
     const quarters = (detail.period_marker ?? []).filter((q) => q.quarter <= 2);
     if (quarters.length) {
@@ -181,7 +212,9 @@ export async function getScreenData({ token, match, part = 'first' }) {
       rivalPts = lleidaLocal ? visitor : local;
     }
   } else {
-    players = sumPeriods([await box()]);
+    const [all, team] = await Promise.all([box(), teamBox()]);
+    players = sumPeriods([all]);
+    teamRows = [team];
   }
 
   const mvp = buildMvp(players);
@@ -196,6 +229,7 @@ export async function getScreenData({ token, match, part = 'first' }) {
       rivalPts: rivalPts ?? 0,
     },
     mvp,
+    teamStats: buildTeamStats(teamRows),
     shotmap: part === 'first' ? buildShotMap(shotRows, mvp) : null,
   };
   cache.set(key, { at: Date.now(), data });

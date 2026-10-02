@@ -57,6 +57,18 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 /* La mida del cercle surt del font-size del marcador; la "v" va a part */
 .score-face .vs span { font-size: 0.14em; line-height: 1; }
 
+/* Taula d'estadístiques sota el marcador (blanc sobre el fons blau) */
+.stats-table { position: absolute; left: 0; right: 0; bottom: 14px; z-index: 2; font-size: 34px; --kw: 300px; }
+.stats-table.short { font-size: 27px; --kw: 200px; }
+.stat-row {
+  display: grid; grid-template-columns: 1fr var(--kw) 1fr; column-gap: 14px; align-items: center;
+  height: 1.28em; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums;
+}
+.stat-row .l { text-align: right; }
+.stat-row .r { text-align: left; }
+.stat-row .k { text-align: center; font-size: 0.8em; font-weight: 400; color: rgba(255, 255, 255, 0.7); }
+.stat-row .best { font-weight: 700; }
+
 /* ---------- Escena 3: MVP ---------- */
 .mvp-face .text { position: absolute; top: 34px; z-index: 2; }
 .mvp-face .kicker { font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; letter-spacing: 0.03em; }

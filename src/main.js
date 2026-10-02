@@ -164,6 +164,36 @@ function cornersWithSponsor(root) {
 }
 
 // ---------------------------------------------------------------------------
+// Taula d'estadístiques d'equip sota el marcador: Lleida | concepte | rival.
+// En els comptadors (rebots, assistències) el valor més alt va en negreta.
+// ---------------------------------------------------------------------------
+const fmtShots = ([made, tried]) => `${made}/${tried} (${tried ? Math.round((made / tried) * 100) : 0}%)`;
+const STAT_ROWS = [
+  ['TIRS DE CAMP', 'fg', fmtShots],
+  ['TIRS DE 2', 'p2', fmtShots],
+  ['TIRS DE 3', 'p3', fmtShots],
+  ['TIRS LLIURES', 'ft', fmtShots],
+  ['REBOTS', 'reb'],
+  ['REBOTS OFENSIUS', 'oreb'],
+  ['REBOTS DEFENSIUS', 'dreb'],
+  ['ASSISTÈNCIES', 'ast'],
+];
+
+function statsTable(stats, short) {
+  const table = el('div', { className: `stats-table${short ? ' short' : ''}` });
+  for (const [label, key, fmt] of STAT_ROWS) {
+    const [a, b] = [stats.lleida[key], stats.rival[key]];
+    const lead = fmt ? 0 : Math.sign(a - b); // negreta només als comptadors
+    table.append(el('div', { className: 'stat-row' },
+      el('span', { className: `l${lead > 0 ? ' best' : ''}`, textContent: fmt ? fmt(a) : String(a) }),
+      el('span', { className: 'k', textContent: label }),
+      el('span', { className: `r${lead < 0 ? ' best' : ''}`, textContent: fmt ? fmt(b) : String(b) }),
+    ));
+  }
+  return table;
+}
+
+// ---------------------------------------------------------------------------
 // Escena 2: marcador
 // ---------------------------------------------------------------------------
 function renderScoreScene(game) {
@@ -175,13 +205,16 @@ function renderScoreScene(game) {
   const rivalFirst = { team: game?.rival, pts: game?.rivalPts };
   const maxDigits = Math.max(String(game?.lleidaPts ?? 0).length, String(game?.rivalPts ?? 0).length);
 
-  FACES.forEach((f, i) => {
+  FACES.forEach((f) => {
     const short = f.w === 640;
-    // Com al disseny: a les cares B i D primer Lleida, a C i A primer el rival
-    const [left, right] = i % 2 === 0 ? [lleidaFirst, rivalFirst] : [rivalFirst, lleidaFirst];
-    const logoSize = short ? 190 : 300;
-    const margin = short ? 6 : 30;
-    let fontSize = short ? 200 : 270;
+    // El cub és al pavelló del Lleida: a totes les cares primer Lleida (esquerra) i després el rival
+    const [left, right] = [lleidaFirst, rivalFirst];
+    const hasStats = !!game?.stats;
+    // Amb la taula d'estadístiques, escuts i marcador pugen i es fan una mica més petits
+    const logoSize = hasStats ? (short ? 130 : 200) : short ? 190 : 300;
+    const margin = short ? 8 : 40;
+    const centerY = hasStats ? (short ? 175 : 160) : 320;
+    let fontSize = hasStats ? (short ? 130 : 180) : short ? 200 : 270;
     if (maxDigits >= 3) fontSize = Math.round(fontSize * 0.72); // marcadors de 3 xifres (100+)
 
     const face = zone('face score-face', f.x0, f.w);
@@ -190,11 +223,12 @@ function renderScoreScene(game) {
       if (!t.team?.logo) continue;
       face.append(el('img', {
         className: 'team-logo', src: t.team.logo, alt: t.team.name,
-        style: { width: px(logoSize), height: px(logoSize), [side]: px(margin) },
+        style: { width: px(logoSize), height: px(logoSize), top: px(centerY), [side]: px(margin) },
       }));
     }
     const pad = (n) => String(n ?? 0).padStart(2, '0');
-    face.append(el('div', { className: 'row', style: { fontSize: px(fontSize) } },
+    if (hasStats) face.append(statsTable(game.stats, short));
+    face.append(el('div', { className: 'row', style: { fontSize: px(fontSize), top: px(centerY) } },
       el('span', { className: 'pts', textContent: pad(left.pts) }),
       el('span', { className: 'vs' }, el('span', { textContent: 'v' })),
       el('span', { className: 'pts', textContent: pad(right.pts) }),
@@ -280,7 +314,7 @@ function apply(data) {
   const key = JSON.stringify(data);
   if (key === lastKey) return; // només es redibuixa si han canviat les dades
   lastKey = key;
-  const game = { ...data.game, label: params.get('label') ?? HALF_LABEL };
+  const game = { ...data.game, stats: data.teamStats, label: params.get('label') ?? HALF_LABEL };
   preload([game.lleida?.logo, game.rival?.logo, data.mvp?.photo]);
   renderScoreScene(game);
   renderMvpScene(data.mvp);
