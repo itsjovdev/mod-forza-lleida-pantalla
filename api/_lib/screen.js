@@ -19,7 +19,7 @@ async function acb(token, path, query) {
 function teamInfo(team) {
   const media = team?.media?.length ? team.media : team?.club?.media ?? [];
   const pick = (type) => media.find((m) => m.type === type)?.url;
-  return { name: team?.team_actual_short_name ?? '', logo: pick('logo_negativo') ?? pick('logo') ?? null };
+  return { name: team?.team_actual_short_name ?? '', logo: pick('logo') ?? pick('logo_negativo') ?? null }; // logo normal (amb colors); el negatiu només si no n'hi ha
 }
 
 // Dia (a Lleida) d'una data en segons Unix
