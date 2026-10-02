@@ -18,7 +18,7 @@ const CORNERS = [0, 896, 2304, 3200]; // 256 px cadascuna
 
 const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 
-// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MITJA%20PART (canvia el títol)
+// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?team=4473 (proves amb un altre equip)  ?mirror=1 (mapa de tirs emmirallat)  ?label=MITJA%20PART (canvia el títol)
 //                     ?seconds=10 (durada de cada pantalla)  ?guides=1  ?refresh=20
 const params = new URLSearchParams(location.search);
 const PINNED = Number(params.get('scene')) || 0;
@@ -34,6 +34,17 @@ const scenes = ['scene-logo', 'scene-score', 'scene-mvp'].map((id) => document.g
 const shotsScene = document.getElementById('scene-shots');
 const MIN_SHOTS = Number(params.get('minshots')) || 5; // amb menys tirs amb coordenades, la pantalla se salta
 let shotsAnim = []; // update(t) de cada cara de la pantalla de tirs
+// ?mirror=1 → mapa de tirs emmirallat (esquerra ↔ dreta), per si la convenció de posY de l'API fos la contrària
+const MIRROR = params.get('mirror') === '1';
+function mirrorShotmap(sm) {
+  const flip = (x) => +(15 - x).toFixed(2);
+  const swap = { corner_l: 'corner_r', corner_r: 'corner_l' };
+  return {
+    ...sm,
+    shots: sm.shots.map((s) => ({ ...s, x: flip(s.x) })),
+    zone: sm.zone && { ...sm.zone, zone: swap[sm.zone.zone] ?? sm.zone.zone, x0: flip(sm.zone.x1), x1: flip(sm.zone.x0) },
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Utilitats
@@ -292,7 +303,7 @@ function renderShotsScene(mvp, shotmap) {
   for (const f of FACES) {
     const short = f.w === 640;
     const face = zone(`face shots-face ${short ? 'short' : 'long'}`, f.x0, f.w);
-    const built = buildShotsFace(short, mvp, shotmap);
+    const built = buildShotsFace(short, mvp, MIRROR ? mirrorShotmap(shotmap) : shotmap);
     face.append(built.node);
     shotsAnim.push(built.update);
     shotsScene.append(face);
@@ -303,7 +314,7 @@ function renderShotsScene(mvp, shotmap) {
 // Dades: una sola crida petita a /api/screen (el servidor parla amb l'ACB).
 // Les últimes dades es guarden al navegador per pintar a l'instant en recarregar.
 // ---------------------------------------------------------------------------
-const STORE_KEY = `cub:screen:${PART}:` + (params.get('match') || 'auto');
+const STORE_KEY = `cub:screen:${PART}:${params.get('team') || 'default'}:` + (params.get('match') || 'auto');
 let lastKey = '';
 
 function preload(urls) {
@@ -325,6 +336,7 @@ async function refresh() {
   try {
     const q = new URLSearchParams({ part: PART });
     if (params.get('match')) q.set('match', params.get('match'));
+    if (params.get('team')) q.set('team', params.get('team')); // proves amb un altre equip (per defecte, el Lleida)
     const res = await fetch('/api/screen?' + q);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);

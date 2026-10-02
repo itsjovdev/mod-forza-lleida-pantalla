@@ -76,6 +76,26 @@ function courtLines() {
   return g;
 }
 
+// Cifra + etiqueta a la mateixa línia (tspan encadenat: no cal mesurar el text)
+function numLabel(num, lab, { x, y, numSize, labSize, gap = 14 }) {
+  const t = svg('text', { x, y, 'font-family': FONT });
+  const n = svg('tspan', { 'font-size': numSize, 'font-weight': 700, fill: WHITE });
+  n.textContent = num;
+  const l = svg('tspan', { dx: gap, 'font-size': labSize, 'font-weight': 500, fill: LABEL });
+  l.textContent = lab;
+  t.append(n, l);
+  return t;
+}
+
+// Files de la suma: TIRS DE 2 + TRIPLES + LLIURES (sense la fila si no n'hi ha intents) = PUNTS
+function sumRows(mvp) {
+  return [
+    [`${mvp.p2Made}/${mvp.p2Tried}`, 'TIRS DE 2', mvp.p2Tried],
+    [`${mvp.p3Made}/${mvp.p3Tried}`, 'TRIPLES', mvp.p3Tried],
+    [`${mvp.ftMade}/${mvp.ftTried}`, 'LLIURES', mvp.ftTried],
+  ].filter(([, , tried]) => tried > 0).map(([num, lab]) => [num, lab]);
+}
+
 function fgLabel(fg, made, tried) {
   fg.replaceChildren(
     svg('tspan', { fill: WHITE }, document.createTextNode(String(made))),
@@ -92,16 +112,12 @@ function longPanel(mvp, sm) {
   g.append(text(name, { x: 826, y: 108, 'font-size': fitSize(name, 72, 278, 56), 'font-weight': 700, fill: WHITE }));
   const fg = text('', { x: 726, y: 330, 'font-size': 140, 'font-weight': 700, fill: '#fff' });
   g.append(fg);
-  g.append(text('ANOTATS', { x: 726, y: 396, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
-  g.append(svg('rect', { x: 726, y: 424, width: 378, height: 4, fill: LINE }));
-  const line = (num, lab, y) => {
-    g.append(
-      text(num, { x: 726, y, 'font-size': 72, 'font-weight': 700, fill: '#fff' }),
-      text(lab, { x: 726 + textWidth(num, 72) + 16, y, 'font-size': 48, 'font-weight': 500, fill: LABEL }),
-    );
-  };
-  line(mvp.pts, 'PUNTS', 516);
-  line(`${mvp.p3Made}/${mvp.p3Tried}`, 'TRIPLES', 604);
+  g.append(text('TIRS DE CAMP', { x: 726, y: 396, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
+  g.append(svg('rect', { x: 726, y: 410, width: 378, height: 4, fill: LINE }));
+  // Suma visible: tirs de 2 + triples + lliures, i a sota el total de punts
+  sumRows(mvp).forEach(([num, lab], i) => g.append(numLabel(num, lab, { x: 726, y: 464 + i * 50, numSize: 50, labSize: 34 })));
+  g.append(svg('rect', { x: 726, y: 582, width: 378, height: 3, fill: LINE }));
+  g.append(numLabel(mvp.pts, 'PUNTS', { x: 726, y: 632, numSize: 62, labSize: 40 }));
   return { g, fg };
 }
 
@@ -156,17 +172,19 @@ function buildShort(mvp, sm) {
   const name = mvp.last.toUpperCase();
   root.append(text(name, { x: X + 72, y: 114, 'font-size': fitSize(name, 64, 590 - X - 72, 36), 'font-weight': 700, fill: WHITE }));
   const fg = text('', { x: X, y: 250, 'font-size': 124, 'font-weight': 700, fill: '#fff' });
-  root.append(fg);
+  root.append(fg, text('TIRS DE CAMP', { x: X, y: 288, 'font-size': 32, 'font-weight': 500, fill: LABEL }));
 
   // Icones de tir (6 per fila): mateixos símbols que a la pista
   const icons = sm.shots.slice(0, 18).map((s, i) => {
-    const m = mark(s, X + 11 + (i % 6) * 46, 296 + Math.floor(i / 6) * 42, 9, 5);
+    const m = mark(s, X + 11 + (i % 6) * 46, 322 + Math.floor(i / 6) * 40, 9, 5);
     m.classList.add('shot');
     root.append(m);
     return m;
   });
-  root.append(text(mvp.pts, { x: X, y: 530, 'font-size': 112, 'font-weight': 700, fill: '#fff' }));
-  root.append(text('PUNTS', { x: X, y: 584, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
+  // Suma visible: tirs de 2 + triples + lliures, i a sota el total de punts
+  sumRows(mvp).forEach(([num, lab], i) => root.append(numLabel(num, lab, { x: X, y: 446 + i * 40, numSize: 36, labSize: 26, gap: 10 })));
+  root.append(svg('rect', { x: X, y: 548, width: 290, height: 3, fill: LINE }));
+  root.append(numLabel(mvp.pts, 'PUNTS', { x: X, y: 616, numSize: 70, labSize: 36 }));
   return { root, marks: icons, zoneEl: null, fg };
 }
 

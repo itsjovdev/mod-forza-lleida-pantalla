@@ -3,7 +3,7 @@ import { getScreenData } from './_lib/screen.js';
 
 export default async function handler(req, res) {
   try {
-    const data = await getScreenData({ token: process.env.ACB_TOKEN, match: req.query.match, part: req.query.part === 'final' ? 'final' : 'first' });
+    const data = await getScreenData({ token: process.env.ACB_TOKEN, match: req.query.match, team: req.query.team, part: req.query.part === 'final' ? 'final' : 'first' });
     res.setHeader('Cache-Control', 's-maxage=10, stale-while-revalidate=60');
     res.status(200).json(data);
   } catch (err) {

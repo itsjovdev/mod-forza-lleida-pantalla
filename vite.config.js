@@ -7,7 +7,7 @@ function screenApi(token) {
   const handler = async (req, res) => {
     const q = new URL(req.url, 'http://x').searchParams;
     try {
-      const data = await getScreenData({ token, match: q.get('match'), part: q.get('part') === 'final' ? 'final' : 'first' });
+      const data = await getScreenData({ token, match: q.get('match'), team: q.get('team'), part: q.get('part') === 'final' ? 'final' : 'first' });
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(data));
     } catch (err) {
