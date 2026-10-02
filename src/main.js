@@ -16,11 +16,13 @@ const CORNERS = [0, 896, 2304, 3200]; // 256 px cadascuna
 
 const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 
-// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE
+// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE (canvia el títol)
 //                     ?seconds=10 (durada de cada pantalla)  ?guides=1  ?refresh=20
 const params = new URLSearchParams(location.search);
 const PINNED = Number(params.get('scene')) || 0;
 const SCENE_SECONDS = Number(params.get('seconds')) || 10;
+// Aquest enllaç és el del primer temps: el títol del marcador és fix
+const HALF_LABEL = 'PRIMER TIEMPO';
 const REFRESH_SECONDS = Number(params.get('refresh')) || 20;
 
 const stage = document.getElementById('stage');
@@ -252,7 +254,7 @@ function apply(data) {
   const key = JSON.stringify(data);
   if (key === lastKey) return; // només es redibuixa si han canviat les dades
   lastKey = key;
-  const game = { ...data.game, label: params.get('label') ?? data.game.label };
+  const game = { ...data.game, label: params.get('label') ?? HALF_LABEL };
   preload([game.lleida?.logo, game.rival?.logo, data.mvp?.photo]);
   renderScoreScene(game);
   renderMvpScene(data.mvp);
