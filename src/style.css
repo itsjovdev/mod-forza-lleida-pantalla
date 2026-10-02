@@ -27,12 +27,12 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .pixels { position: absolute; left: 0; top: 0; display: block; }
 
 .presented {
-  position: absolute; left: 0; right: 0; bottom: 40px;
+  position: absolute; left: 0; right: 0; bottom: 64px;
   display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
-  padding-left: 53px; box-sizing: border-box; /* text i logo alineats a l'esquerra; el logo de 150 px queda on era */
-  font-size: 26px; font-weight: 400;
+  padding-left: 33px; box-sizing: border-box; /* text i logo alineats a l'esquerra; el logo de 190 px queda centrat a la cantonada */
+  font-size: 34px; font-weight: 400;
 }
-.presented img { width: 150px; display: block; }
+.presented img { width: 190px; display: block; }
 
 /* ---------- Escena 1: logo MOD ---------- */
 #scene-logo .face { display: flex; align-items: center; justify-content: center; }
@@ -41,7 +41,7 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 /* ---------- Escena 2: marcador ---------- */
 .score-face .label {
   position: absolute; top: 34px; left: 0; right: 0; text-align: center;
-  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; font-size: 30px; letter-spacing: 0.04em;
+  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; font-size: 36px; letter-spacing: 0.04em;
 }
 .score-face .team-logo { position: absolute; top: 50%; transform: translateY(-50%); object-fit: contain; z-index: 1; }
 .score-face .row {
@@ -59,15 +59,15 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .score-face .vs span { font-size: 0.14em; line-height: 1; }
 
 /* Taula d'estadístiques sota el marcador (blanc sobre el fons blau) */
-.stats-table { position: absolute; left: 0; right: 0; bottom: 14px; z-index: 2; font-size: 34px; --kw: 300px; }
-.stats-table.short { font-size: 27px; --kw: 200px; }
+.stats-table { position: absolute; left: 0; right: 0; bottom: 12px; z-index: 2; font-size: 37px; --kw: 310px; }
+.stats-table.short { font-size: 38px; --kw: 240px; }
 .stat-row {
   display: grid; grid-template-columns: 1fr var(--kw) 1fr; column-gap: 14px; align-items: center;
   height: 1.28em; line-height: 1; font-weight: 500; font-variant-numeric: tabular-nums;
 }
 .stat-row .l { text-align: right; }
 .stat-row .r { text-align: left; }
-.stat-row .k { text-align: center; font-size: 0.8em; font-weight: 400; color: rgba(255, 255, 255, 0.7); }
+.stat-row .k { text-align: center; font-size: 0.85em; font-weight: 400; color: rgba(255, 255, 255, 0.7); }
 .stat-row .best { font-weight: 700; }
 
 /* ---------- Escena 3: MVP ---------- */

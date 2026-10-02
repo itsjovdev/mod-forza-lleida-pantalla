@@ -211,10 +211,10 @@ function renderScoreScene(game) {
     const [left, right] = [lleidaFirst, rivalFirst];
     const hasStats = !!game?.stats;
     // Amb la taula d'estadístiques, escuts i marcador pugen i es fan una mica més petits
-    const logoSize = hasStats ? (short ? 130 : 200) : short ? 190 : 300;
+    const logoSize = hasStats ? (short ? 120 : 180) : short ? 190 : 300;
     const margin = short ? 8 : 40;
-    const centerY = hasStats ? (short ? 175 : 160) : 320;
-    let fontSize = hasStats ? (short ? 130 : 180) : short ? 200 : 270;
+    const centerY = hasStats ? (short ? 160 : 145) : 320;
+    let fontSize = hasStats ? (short ? 120 : 170) : short ? 200 : 270;
     if (maxDigits >= 3) fontSize = Math.round(fontSize * 0.72); // marcadors de 3 xifres (100+)
 
     const face = zone('face score-face', f.x0, f.w);
