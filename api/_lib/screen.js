@@ -46,7 +46,7 @@ function statusLabel(m) {
   return `${m.period}r QUART`;
 }
 
-const STAT_KEYS = ['points', 'asis', 'total_rebound', 'val', '2pt_success', '2pt_tried', '3pt_success', '3pt_tried'];
+const STAT_KEYS = ['points', 'asis', 'total_rebound', 'val', '2pt_success', '2pt_tried', '3pt_success', '3pt_tried', '1pt_success', '1pt_tried'];
 
 // Suma les estadístiques de diversos períodes per jugador (p. ex. 1r + 2n quart = primer temps)
 function sumPeriods(periodRows, teamId) {
