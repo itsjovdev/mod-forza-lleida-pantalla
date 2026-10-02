@@ -212,9 +212,10 @@ export async function getScreenData({ token, match, part = 'first' }) {
       rivalPts = lleidaLocal ? visitor : local;
     }
   } else {
-    const [all, team] = await Promise.all([box(), teamBox()]);
+    const [all, team, shots] = await Promise.all([box(), teamBox(), shotsRows().catch(() => [])]);
     players = sumPeriods([all]);
     teamRows = [team];
+    shotRows = shots; // tot el partit
   }
 
   const mvp = buildMvp(players);
@@ -230,7 +231,7 @@ export async function getScreenData({ token, match, part = 'first' }) {
     },
     mvp,
     teamStats: buildTeamStats(teamRows),
-    shotmap: part === 'first' ? buildShotMap(shotRows, mvp) : null,
+    shotmap: buildShotMap(shotRows, mvp),
   };
   cache.set(key, { at: Date.now(), data });
   return data;
