@@ -159,7 +159,7 @@ function buildLong(mvp, sm) {
 function buildShort(mvp, sm) {
   const root = svg('svg', { width: 640, height: 640, viewBox: '0 0 640 640' });
   const photo = svg('image', {
-    x: 20, y: 70, width: Math.round(540 * 1035 / 1964), height: 540,
+    x: 20, y: 100, width: Math.round(540 * 1035 / 1964), height: 540, // 100 + 540 = 640: la foto toca el fons de la cara
     preserveAspectRatio: 'xMidYMax meet',
   });
   photo.setAttribute('href', mvp.photo);
