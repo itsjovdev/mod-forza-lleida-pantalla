@@ -2,7 +2,7 @@ import { buildShotsFace } from './shots.js';
 
 // ---------------------------------------------------------------------------
 // Cub LED Força Lleida · 4608 × 640 px · seqüència de pantalles de 10 s:
-//   1) Logo MOD (estàtic)   2) Tirs del jugador més valorat (només a /)   3) Marcador   4) Jugador més valorat
+//   1) Logo MOD (estàtic)   2) Marcador   3) Jugador més valorat   4) Tirs del jugador més valorat (només a /)
 // Dades: /api/screen (funció de Vercel que consulta l'ACB Open API Live amb el token al servidor).
 // ---------------------------------------------------------------------------
 const W = 4608;
@@ -30,7 +30,7 @@ const REFRESH_SECONDS = Number(params.get('refresh')) || 20;
 
 const stage = document.getElementById('stage');
 const scenes = ['scene-logo', 'scene-score', 'scene-mvp'].map((id) => document.getElementById(id));
-// Només a / (primer temps): pantalla de tirs del MVP, la segona de la seqüència
+// Només a / (primer temps): pantalla de tirs del MVP, l'última de la seqüència
 const shotsScene = document.getElementById('scene-shots');
 const MIN_SHOTS = Number(params.get('minshots')) || 5; // amb menys tirs amb coordenades, la pantalla se salta
 let shotsAnim = []; // update(t) de cada cara de la pantalla de tirs
@@ -316,10 +316,9 @@ if (params.get('guides') === '1') {
   }
 }
 
-// Seqüència: logo · [tirs del MVP, si n'hi ha prou] · marcador · MVP
+// Seqüència: logo · marcador · MVP · [tirs del MVP, si n'hi ha prou]
 function sequence() {
-  const [logo, score, mvp] = scenes;
-  return shotsScene && shotsAnim.length ? [logo, shotsScene, score, mvp] : [logo, score, mvp];
+  return shotsScene && shotsAnim.length ? [...scenes, shotsScene] : [...scenes];
 }
 function showScene(on) { for (const s of [...scenes, shotsScene]) s?.classList.toggle('on', s === on); }
 
