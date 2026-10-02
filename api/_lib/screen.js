@@ -70,6 +70,11 @@ function buildMvp(players) {
   const made = best['2pt_success'] + best['3pt_success'];
   const tried = best['2pt_tried'] + best['3pt_tried'];
   return {
+    idLicense: best.id_license,
+    fgMade: made,
+    fgTried: tried,
+    p3Made: best['3pt_success'],
+    p3Tried: best['3pt_tried'],
     first,
     last: rest.join(' '),
     val: best.val,
@@ -79,6 +84,60 @@ function buildMvp(players) {
     fg: tried ? `${((made / tried) * 100).toFixed(1)}%` : '0%',
     photo: PHOTO_BODY(best.id_license),
     photoFallback: best.license.media?.find((m) => m.type === 'foto_cuerpo')?.url ?? null,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Mapa de tirs. PlayByPlay/shotsbreakdown dóna posX/posY en mm respecte a l'cèrcol
+// (posX = distància a l'cèrcol, posY = lateral). Es passa a metres de pista (mitja pista
+// 15 × 14 m, cèrcol a y = 1,575 m): x = 7,5 + posY/1000 · y = 1,575 + posX/1000.
+// Tirs lliures i esmaixades (mate) venen a (0,0): no es poden dibuixar.
+// ---------------------------------------------------------------------------
+const FG_TYPES = { 93: [2, true], 94: [3, true], 97: [2, false], 98: [3, false] };
+const COURT_W = 15;
+const COURT_H = 14;
+const HOOP_Y = 1.575;
+
+// Zones ressaltables (en metres de pista). Només s'escull una si té mínim 3 intents.
+const ZONES = {
+  paint: { x0: 7.5 - 2.45, x1: 7.5 + 2.45, y0: 0, y1: 5.8 },
+  corner_l: { x0: 7.5 - 7.5, x1: 7.5 - 6.6, y0: 0, y1: 2.99 },
+  corner_r: { x0: 7.5 + 6.6, x1: 7.5 + 7.5, y0: 0, y1: 2.99 },
+};
+const inZone = (z, s) => s.x >= z.x0 && s.x <= z.x1 && s.y >= z.y0 && s.y <= z.y1;
+
+function bestZone(shots) {
+  let best = null;
+  for (const [name, z] of Object.entries(ZONES)) {
+    const inside = shots.filter((s) => inZone(z, s));
+    const made = inside.filter((s) => s.made).length;
+    if (inside.length < 3) continue;
+    if (!best || made > best.made || (made === best.made && made / inside.length > best.made / best.tried)) {
+      best = { zone: name, ...z, made, tried: inside.length };
+    }
+  }
+  return best;
+}
+
+function buildShotMap(rows, mvp) {
+  if (!mvp) return null;
+  const mine = rows.filter((r) => r.id_license === mvp.idLicense && FG_TYPES[r.id_playbyplaytype]);
+  const shots = mine
+    .filter((r) => r.posX || r.posY)
+    .map((r) => {
+      const [pts, made] = FG_TYPES[r.id_playbyplaytype];
+      return { x: +(7.5 + r.posY / 1000).toFixed(2), y: +(HOOP_Y + r.posX / 1000).toFixed(2), made, pts, period: r.period, crono: r.crono };
+    })
+    // Mitja pista del tir: es descarta qualsevol tir des de fora d'aquesta zona
+    .filter((s) => s.x >= 0 && s.x <= COURT_W && s.y >= 0 && s.y <= COURT_H)
+    // crono és el temps que queda del període → cronològic = període ↑, crono ↓
+    .sort((a, b) => a.period - b.period || b.crono.localeCompare(a.crono));
+  if (!shots.length) return null;
+  return {
+    dorsal: mine.find((r) => r.shirt_number)?.shirt_number ?? '',
+    shots,
+    hidden: mine.length - shots.length, // tirs sense coordenades (mates, etc.)
+    zone: bestZone(shots),
   };
 }
 
@@ -103,10 +162,16 @@ export async function getScreenData({ token, match, part = 'first' }) {
   let lleidaPts = lleidaLocal ? m.score_local : m.score_visitor;
   let rivalPts = lleidaLocal ? m.score_visitor : m.score_local;
   let players;
+  let shotRows = [];
+  const shotsRows = (period) => acb(token, 'PlayByPlay/shotsbreakdown', { idMatch: m.id, ...(period ? { period } : {}) });
 
   if (part === 'first') {
     // Estadístiques i marcador només dels quarts 1 i 2
-    const [q1, q2, detail] = await Promise.all([box(1), box(2), acb(token, 'Matches/match', { idMatch: m.id })]);
+    const [q1, q2, detail, s1, s2] = await Promise.all([
+      box(1), box(2), acb(token, 'Matches/match', { idMatch: m.id }),
+      shotsRows(1).catch(() => []), shotsRows(2).catch(() => []),
+    ]);
+    shotRows = [...s1, ...s2];
     players = sumPeriods([q1, q2]);
     const quarters = (detail.period_marker ?? []).filter((q) => q.quarter <= 2);
     if (quarters.length) {
@@ -119,6 +184,7 @@ export async function getScreenData({ token, match, part = 'first' }) {
     players = sumPeriods([await box()]);
   }
 
+  const mvp = buildMvp(players);
   const data = {
     matchId: m.id,
     part,
@@ -129,7 +195,8 @@ export async function getScreenData({ token, match, part = 'first' }) {
       lleidaPts: lleidaPts ?? 0,
       rivalPts: rivalPts ?? 0,
     },
-    mvp: buildMvp(players),
+    mvp,
+    shotmap: part === 'first' ? buildShotMap(shotRows, mvp) : null,
   };
   cache.set(key, { at: Date.now(), data });
   return data;

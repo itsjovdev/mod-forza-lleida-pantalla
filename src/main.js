@@ -1,6 +1,8 @@
+import { buildShotsFace } from './shots.js';
+
 // ---------------------------------------------------------------------------
-// Cub LED Força Lleida · 4608 × 640 px · seqüència de 3 pantalles de 10 s:
-//   1) Logo MOD (estàtic)   2) Marcador del partit   3) Jugador més valorat
+// Cub LED Força Lleida · 4608 × 640 px · seqüència de pantalles de 10 s:
+//   1) Logo MOD (estàtic)   2) Tirs del jugador més valorat (només a /)   3) Marcador   4) Jugador més valorat
 // Dades: /api/screen (funció de Vercel que consulta l'ACB Open API Live amb el token al servidor).
 // ---------------------------------------------------------------------------
 const W = 4608;
@@ -28,6 +30,10 @@ const REFRESH_SECONDS = Number(params.get('refresh')) || 20;
 
 const stage = document.getElementById('stage');
 const scenes = ['scene-logo', 'scene-score', 'scene-mvp'].map((id) => document.getElementById(id));
+// Només a / (primer temps): pantalla de tirs del MVP, la segona de la seqüència
+const shotsScene = document.getElementById('scene-shots');
+const MIN_SHOTS = Number(params.get('minshots')) || 5; // amb menys tirs amb coordenades, la pantalla se salta
+let shotsAnim = []; // update(t) de cada cara de la pantalla de tirs
 
 // ---------------------------------------------------------------------------
 // Utilitats
@@ -241,6 +247,25 @@ function renderMvpScene(mvp) {
 }
 
 // ---------------------------------------------------------------------------
+// Escena de tirs: MVP del primer temps. Cares llargues = pista, cares curtes = fitxa del jugador.
+// ---------------------------------------------------------------------------
+function renderShotsScene(mvp, shotmap) {
+  if (!shotsScene) return;
+  shotsScene.replaceChildren();
+  shotsAnim = [];
+  cornersWithSponsor(shotsScene);
+  if (!mvp || !shotmap || shotmap.shots.length < MIN_SHOTS) return;
+  for (const f of FACES) {
+    const short = f.w === 640;
+    const face = zone(`face shots-face ${short ? 'short' : 'long'}`, f.x0, f.w);
+    const built = buildShotsFace(short, mvp, shotmap);
+    face.append(built.node);
+    shotsAnim.push(built.update);
+    shotsScene.append(face);
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Dades: una sola crida petita a /api/screen (el servidor parla amb l'ACB).
 // Les últimes dades es guarden al navegador per pintar a l'instant en recarregar.
 // ---------------------------------------------------------------------------
@@ -259,6 +284,7 @@ function apply(data) {
   preload([game.lleida?.logo, game.rival?.logo, data.mvp?.photo]);
   renderScoreScene(game);
   renderMvpScene(data.mvp);
+  renderShotsScene(data.mvp, data.shotmap);
 }
 
 async function refresh() {
@@ -290,11 +316,17 @@ if (params.get('guides') === '1') {
   }
 }
 
-function showScene(i) { scenes.forEach((s, k) => s.classList.toggle('on', k === i)); }
+// Seqüència: logo · [tirs del MVP, si n'hi ha prou] · marcador · MVP
+function sequence() {
+  const [logo, score, mvp] = scenes;
+  return shotsScene && shotsAnim.length ? [logo, shotsScene, score, mvp] : [logo, score, mvp];
+}
+function showScene(on) { for (const s of [...scenes, shotsScene]) s?.classList.toggle('on', s === on); }
 
 renderLogoScene();
 renderScoreScene(null);
 renderMvpScene(null);
+renderShotsScene(null, null);
 try { const cached = localStorage.getItem(STORE_KEY); if (cached) apply(JSON.parse(cached)); } catch {}
 refresh();
 setInterval(refresh, REFRESH_SECONDS * 1000);
@@ -303,8 +335,11 @@ document.fonts.ready.then(() => { const d = lastKey; lastKey = ''; if (d) apply(
 
 const start = performance.now();
 function tick() {
-  const i = PINNED ? PINNED - 1 : Math.floor((performance.now() - start) / 1000 / SCENE_SECONDS) % scenes.length;
-  showScene(i);
+  const seq = sequence();
+  const elapsed = (performance.now() - start) / 1000;
+  const i = PINNED ? Math.min(PINNED, seq.length) - 1 : Math.floor(elapsed / SCENE_SECONDS) % seq.length;
+  showScene(seq[i]);
+  if (seq[i] === shotsScene) for (const update of shotsAnim) update(elapsed % SCENE_SECONDS);
 }
 tick();
 setInterval(tick, 100);

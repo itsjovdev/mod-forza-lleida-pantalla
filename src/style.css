@@ -77,6 +77,16 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 .mvp-face.short .stat:nth-child(n + 3) { border-top: 1px solid rgba(255, 255, 255, 0.35); }
 .mvp-face.long .stats { grid-template-columns: repeat(4, auto); }
 
+/* ---------- Escena de tirs del MVP ---------- */
+.shots-face svg { display: block; }
+.shots-face .shot {
+  opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(0.3);
+  transition: opacity 0.18s ease-out, transform 0.18s ease-out;
+}
+.shots-face .shot.in { opacity: 1; transform: scale(1); }
+.shots-face .zone { opacity: 0; transition: opacity 0.4s ease-out; }
+.shots-face .zone.in { opacity: 1; }
+
 /* ---------- Guies (?guides=1) ---------- */
 #guides { position: absolute; inset: 0; pointer-events: none; display: none; z-index: 10; }
 #guides.on { display: block; }
