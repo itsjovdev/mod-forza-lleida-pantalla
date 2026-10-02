@@ -230,7 +230,7 @@ function renderScoreScene(game) {
     if (hasStats) face.append(statsTable(game.stats, short));
     face.append(el('div', { className: 'row', style: { fontSize: px(fontSize), top: px(centerY) } },
       el('span', { className: 'pts', textContent: pad(left.pts) }),
-      el('span', { className: 'vs' }, el('span', { textContent: 'v' })),
+      el('span', { className: 'vs' }),
       el('span', { className: 'pts', textContent: pad(right.pts) }),
     ));
     root.append(face);

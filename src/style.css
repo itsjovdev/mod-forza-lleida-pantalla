@@ -50,13 +50,8 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
   font-family: 'Saira Extra Condensed', sans-serif; font-weight: 700; line-height: 1;
 }
 .score-face .pts { text-shadow: 0 4px 18px rgba(0, 0, 0, 0.35); font-variant-numeric: tabular-nums; }
-.score-face .vs {
-  width: 0.24em; height: 0.24em; border-radius: 50%; background: var(--green);
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Saira Extra Condensed', sans-serif; font-weight: 500; margin: 0 0.15em;
-}
-/* La mida del cercle surt del font-size del marcador; la "v" va a part */
-.score-face .vs span { font-size: 0.14em; line-height: 1; }
+/* Separador entre els dos marcadors: una ratlla blanca ("-"); la mida surt del font-size del marcador */
+.score-face .vs { width: 0.2em; height: 0.06em; margin: 0 0.14em; background: var(--white); border-radius: 0.03em; }
 
 /* Taula d'estadístiques sota el marcador (blanc sobre el fons blau) */
 .stats-table { position: absolute; left: 0; right: 0; bottom: 12px; z-index: 2; font-size: 37px; --kw: 310px; }
