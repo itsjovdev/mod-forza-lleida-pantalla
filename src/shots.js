@@ -110,14 +110,14 @@ function longPanel(mvp, sm) {
   g.append(text(String(sm.dorsal ?? ''), { x: 766, y: 40 + 40 + 56 * 0.35, 'text-anchor': 'middle', 'font-size': 56, 'font-weight': 700, fill: BLUE }));
   const name = mvp.last.toUpperCase();
   g.append(text(name, { x: 826, y: 108, 'font-size': fitSize(name, 72, 278, 56), 'font-weight': 700, fill: WHITE }));
-  const fg = text('', { x: 726, y: 330, 'font-size': 140, 'font-weight': 700, fill: '#fff' });
+  const fg = text('', { x: 726, y: 322, 'font-size': 140, 'font-weight': 700, fill: '#fff' });
   g.append(fg);
-  g.append(text('TIRS DE CAMP', { x: 726, y: 396, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
-  g.append(svg('rect', { x: 726, y: 406, width: 378, height: 4, fill: LINE }));
+  g.append(text('TIRS DE CAMP', { x: 726, y: 388, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
+  g.append(svg('rect', { x: 726, y: 398, width: 378, height: 4, fill: LINE }));
   // Suma visible: tirs de 2 + triples + lliures, i a sota el total de punts
-  sumRows(mvp).forEach(([num, lab], i) => g.append(numLabel(num, lab, { x: 726, y: 454 + i * 48, numSize: 50, labSize: 34 })));
-  g.append(svg('rect', { x: 726, y: 566, width: 378, height: 3, fill: LINE }));
-  g.append(numLabel(mvp.pts, 'PUNTS', { x: 726, y: 610, numSize: 62, labSize: 40 }));
+  sumRows(mvp).forEach(([num, lab], i) => g.append(numLabel(num, lab, { x: 726, y: 444 + i * 45, numSize: 50, labSize: 34 })));
+  g.append(svg('rect', { x: 726, y: 548, width: 378, height: 3, fill: LINE }));
+  g.append(numLabel(mvp.pts, 'PUNTS', { x: 726, y: 600, numSize: 62, labSize: 40 }));
   return { g, fg };
 }
 
