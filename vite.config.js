@@ -5,9 +5,9 @@ import { getScreenData } from './api/_lib/screen.js';
 // amb el token de .env.local (ACB_TOKEN).
 function screenApi(token) {
   const handler = async (req, res) => {
-    const match = new URL(req.url, 'http://x').searchParams.get('match');
+    const q = new URL(req.url, 'http://x').searchParams;
     try {
-      const data = await getScreenData({ token, match });
+      const data = await getScreenData({ token, match: q.get('match'), part: q.get('part') === 'final' ? 'final' : 'first' });
       res.setHeader('Content-Type', 'application/json');
       res.end(JSON.stringify(data));
     } catch (err) {

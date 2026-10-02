@@ -263,8 +263,9 @@ function apply(data) {
 
 async function refresh() {
   try {
-    const q = params.get('match') ? `?match=${encodeURIComponent(params.get('match'))}` : '';
-    const res = await fetch('/api/screen' + q);
+    const q = new URLSearchParams({ part: PART });
+    if (params.get('match')) q.set('match', params.get('match'));
+    const res = await fetch('/api/screen?' + q);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
     apply(data);
