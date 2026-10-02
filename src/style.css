@@ -28,7 +28,8 @@ html, body { margin: 0; padding: 0; overflow: hidden; background: var(--bg); }
 
 .presented {
   position: absolute; left: 0; right: 0; bottom: 40px;
-  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  display: flex; flex-direction: column; align-items: flex-start; gap: 10px;
+  padding-left: 53px; box-sizing: border-box; /* text i logo alineats a l'esquerra; el logo de 150 px queda on era */
   font-size: 26px; font-weight: 400;
 }
 .presented img { width: 150px; display: block; }

@@ -41,7 +41,7 @@ function pickMatch(list) {
 function statusLabel(m) {
   if (m.finalized) return 'FINAL';
   if (!m.live) return 'PRÒXIM PARTIT';
-  if (m.period === 2 && !m.crono) return 'MEDIA PARTE';
+  if (m.period === 2 && !m.crono) return 'DESCANS';
   if (m.period > 4) return 'PRÒRROGA';
   return `${m.period}r QUART`;
 }

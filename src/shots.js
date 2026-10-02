@@ -92,7 +92,7 @@ function longPanel(mvp, sm) {
   g.append(text(name, { x: 826, y: 108, 'font-size': fitSize(name, 72, 278, 56), 'font-weight': 700, fill: WHITE }));
   const fg = text('', { x: 726, y: 330, 'font-size': 140, 'font-weight': 700, fill: '#fff' });
   g.append(fg);
-  g.append(text('ANOTADOS', { x: 726, y: 396, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
+  g.append(text('ANOTATS', { x: 726, y: 396, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
   g.append(svg('rect', { x: 726, y: 424, width: 378, height: 4, fill: LINE }));
   const line = (num, lab, y) => {
     g.append(
@@ -100,7 +100,7 @@ function longPanel(mvp, sm) {
       text(lab, { x: 726 + textWidth(num, 72) + 16, y, 'font-size': 48, 'font-weight': 500, fill: LABEL }),
     );
   };
-  line(mvp.pts, 'PUNTOS', 516);
+  line(mvp.pts, 'PUNTS', 516);
   line(`${mvp.p3Made}/${mvp.p3Tried}`, 'TRIPLES', 604);
   return { g, fg };
 }
@@ -166,7 +166,7 @@ function buildShort(mvp, sm) {
     return m;
   });
   root.append(text(mvp.pts, { x: X, y: 530, 'font-size': 112, 'font-weight': 700, fill: '#fff' }));
-  root.append(text('PUNTOS', { x: X, y: 584, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
+  root.append(text('PUNTS', { x: X, y: 584, 'font-size': 48, 'font-weight': 500, fill: LABEL }));
   return { root, marks: icons, zoneEl: null, fg };
 }
 

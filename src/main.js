@@ -18,14 +18,14 @@ const CORNERS = [0, 896, 2304, 3200]; // 256 px cadascuna
 
 const MOD_LOGO = import.meta.env.BASE_URL + 'logo_mod_white.svg';
 
-// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MEDIA%20PARTE (canvia el títol)
+// Paràmetres per URL: ?anim=1 (quadrats animats)  ?scene=1|2|3 (fixa una pantalla)  ?match=105382  ?label=MITJA%20PART (canvia el títol)
 //                     ?seconds=10 (durada de cada pantalla)  ?guides=1  ?refresh=20
 const params = new URLSearchParams(location.search);
 const PINNED = Number(params.get('scene')) || 0;
 const SCENE_SECONDS = Number(params.get('seconds')) || 10;
 // Cada enllaç té el seu títol fix: /  → primer temps · /final → final del partit
 const PART = document.body.dataset.part || 'first';
-const HALF_LABEL = PART === 'final' ? 'FINAL' : 'PRIMER TIEMPO';
+const HALF_LABEL = PART === 'final' ? 'FINAL' : 'PRIMER TEMPS';
 const REFRESH_SECONDS = Number(params.get('refresh')) || 20;
 
 const stage = document.getElementById('stage');
