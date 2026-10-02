@@ -280,7 +280,7 @@ function renderMvpScene(mvp) {
     const photoW = short ? 380 : 470;
     const photo = el('img', {
       className: 'photo', src: mvp.photo, alt: mvp.first + ' ' + mvp.last,
-      style: { width: px(photoW), height: px(Math.round(photoW * 1964 / 1035)), right: px(short ? -30 : 40) },
+      style: { width: px(photoW), height: px(Math.round(photoW * 1964 / 1035)), right: px(short ? -30 : 40), top: px(short ? 2 : 0) }, // cares curtes: foto 2 px més avall
     });
     if (mvp.photoFallback) photo.addEventListener('error', () => { photo.src = mvp.photoFallback; }, { once: true });
     face.append(photo);
