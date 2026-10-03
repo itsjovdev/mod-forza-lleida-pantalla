@@ -1,7 +1,7 @@
 // Lògica compartida (funció de Vercel api/screen.js i servidor de Vite en local):
 // consulta l'ACB Open API Live i retorna només el que pinten les pantalles.
 const BASE = 'https://api2.acb.com/api/v1/openapilive/';
-export const TEAM_ID = 4477; // PROVA TEMPORAL: Unicaja (Unicaja–CB Canarias). Tornar a 4465 (iLERNA Lleida) abans del directe
+export const TEAM_ID = 4465; // iLERNA Lleida (per defecte; es pot canviar amb ?team=ID per fer proves amb un altre equip)
 const PHOTO_BODY = (idLicense) =>
   `https://fzlleida.dev6.bigbangfood.es/storage/players/men/photo_body/${idLicense}.webp`;
 
