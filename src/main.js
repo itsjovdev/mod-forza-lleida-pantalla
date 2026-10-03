@@ -26,7 +26,8 @@ const SCENE_SECONDS = Number(params.get('seconds')) || 10;
 // Cada enllaç té el seu títol fix: /  → primer temps · /final → final del partit
 const PART = document.body.dataset.part || 'first';
 const HALF_LABEL = PART === 'final' ? 'FINAL' : 'PRIMER TEMPS';
-const REFRESH_SECONDS = Number(params.get('refresh')) || 20;
+const REFRESH_OVERRIDE = Number(params.get('refresh')) || 0; // ?refresh=N força un interval fix; si no, el decideix el servidor
+const RETRY_SECONDS = 20; // si falla la crida
 
 const stage = document.getElementById('stage');
 const scenes = ['scene-logo', 'scene-score', 'scene-mvp'].map((id) => document.getElementById(id));
@@ -322,6 +323,8 @@ function preload(urls) {
 }
 
 function apply(data) {
+  const { refresh: _r, ...rest } = data; // el ritme de refresc no compta com a canvi de dades
+  data = rest;
   const key = JSON.stringify(data);
   if (key === lastKey) return; // només es redibuixa si han canviat les dades
   lastKey = key;
@@ -332,7 +335,9 @@ function apply(data) {
   renderShotsScene(data.mvp, data.shotmap);
 }
 
+let timer;
 async function refresh() {
+  let next = RETRY_SECONDS;
   try {
     const q = new URLSearchParams({ part: PART });
     if (params.get('match')) q.set('match', params.get('match'));
@@ -340,11 +345,13 @@ async function refresh() {
     const res = await fetch('/api/screen?' + q);
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || `HTTP ${res.status}`);
+    next = REFRESH_OVERRIDE || data.refresh; // 0 = dades tancades, no cal preguntar més
     apply(data);
     try { localStorage.setItem(STORE_KEY, JSON.stringify(data)); } catch {}
   } catch (err) {
     console.error('[cub] Error carregant dades:', err);
   }
+  if (next) timer = setTimeout(refresh, next * 1000);
 }
 
 // ---------------------------------------------------------------------------
@@ -374,7 +381,6 @@ renderMvpScene(null);
 renderShotsScene(null, null);
 try { const cached = localStorage.getItem(STORE_KEY); if (cached) apply(JSON.parse(cached)); } catch {}
 refresh();
-setInterval(refresh, REFRESH_SECONDS * 1000);
 // Quan arriben les fonts, reajusta els noms llargs
 document.fonts.ready.then(() => { const d = lastKey; lastKey = ''; if (d) apply(JSON.parse(d)); });
 

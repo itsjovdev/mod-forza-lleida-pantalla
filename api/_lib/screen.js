@@ -6,6 +6,7 @@ const PHOTO_BODY = (idLicense) =>
   `https://fzlleida.dev6.bigbangfood.es/storage/players/men/photo_body/${idLicense}.webp`;
 
 const CACHE_MS = 8000;
+const FROZEN_MS = 3600000; // dades ja tancades (descans passat / partit acabat): es guarden una hora
 const cache = new Map(); // memòria de la instància: evita repetir crides si arriben moltes peticions
 
 async function acb(token, path, query) {
@@ -44,6 +45,25 @@ function statusLabel(m) {
   if (m.period === 2 && !m.crono) return 'DESCANS';
   if (m.period > 4) return 'PRÒRROGA';
   return `${m.period}r QUART`;
+}
+
+// Cada quants segons ha de tornar a preguntar el navegador (0 = les dades ja no canvien: es queda amb aquest valor).
+// crono = segons que queden del quart. Als darrers 5 minuts de la part, cada minut; abans, cada 5 minuts.
+const SLOW = 300;
+const FAST = 60;
+const LAST_SECONDS = 300;
+function refreshPlan(m, part) {
+  if (m.finalized) return 0; // partit acabat: valor fix
+  if (!m.live) return SLOW; // encara no ha començat
+  const period = m.period ?? 0;
+  const crono = m.crono ?? 0;
+  if (part === 'first') {
+    if (period >= 3) return 0; // el primer temps ja és tancat
+    if (period === 2) return crono === 0 ? 2 * FAST : crono <= LAST_SECONDS ? FAST : SLOW; // descans: cada 2 min fins al 3r quart
+    return SLOW;
+  }
+  // final: darrers 5 minuts del 4t quart (o pròrroga) i fins que l'ACB el doni per acabat, cada minut
+  return period >= 4 && crono <= LAST_SECONDS ? FAST : SLOW;
 }
 
 const STAT_KEYS = ['points', 'asis', 'total_rebound', 'val', '2pt_success', '2pt_tried', '3pt_success', '3pt_tried', '1pt_success', '1pt_tried'];
@@ -178,7 +198,7 @@ export async function getScreenData({ token, match, part = 'first', team }) {
   if (!token) throw new Error('Falta ACB_TOKEN');
   const key = `${teamId}:${part}:${match || 'auto'}`;
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < CACHE_MS) return hit.data;
+  if (hit && Date.now() - hit.at < (hit.data.refresh === 0 ? FROZEN_MS : CACHE_MS)) return hit.data;
 
   const list = await acb(token, 'Matches', { idTeam: teamId });
   const m = match ? list.find((x) => String(x.id) === String(match)) : pickMatch(list);
@@ -229,6 +249,7 @@ export async function getScreenData({ token, match, part = 'first', team }) {
     matchId: m.id,
     part,
     status: statusLabel(m),
+    refresh: refreshPlan(m, part),
     game: {
       lleida: teamInfo(lleidaLocal ? m.local_team : m.visitor_team),
       rival: teamInfo(lleidaLocal ? m.visitor_team : m.local_team),
