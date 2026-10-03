@@ -7,7 +7,6 @@ const PHOTO_BODY = (idLicense) =>
 
 const CACHE_MS = 8000;
 const SLOW_CACHE_MS = 60000; // fases lentes: ja no cal re-preguntar a l'ACB cada 8 s
-const FROZEN_MS = 3600000; // dades ja tancades (descans passat / partit acabat): es guarden una hora
 const cache = new Map(); // memòria de la instància: evita repetir crides si arriben moltes peticions
 
 async function acb(token, path, query) {
@@ -48,22 +47,44 @@ function statusLabel(m) {
   return `${m.period}r QUART`;
 }
 
-// Cada quants segons ha de tornar a preguntar el navegador (0 = les dades ja no canvien: es queda amb aquest valor).
+// Cada quants segons ha de tornar a preguntar el navegador. Només es consulten els partits com a LOCAL de l'equip.
 // crono = segons que queden del quart. Als darrers 5 minuts de la part, cada minut; abans, cada 5 minuts.
-// Marge per a revisions de l'àrbitre i correccions: el primer temps només es congela quan el 3r quart ja ha
-// començat de debò (el rellotge corre), i en acabar el partit se segueix preguntant cada 5 min.
+// En tancar-se les dades (primer temps passat / partit acabat) el valor es queda fix i el navegador "dorm" fins
+// 5 minuts abans del proper partit local (màxim 6 h, per si l'ACB canvia l'horari).
+// Marge per a revisions de l'àrbitre i correccions: el primer temps només es tanca quan el 3r quart ja ha
+// començat de debò, i el final se segueix revisant cada 5 min fins a ~3 h després de l'inici.
 const SLOW = 300;
 const FAST = 60;
 const BREAK = 120;
 const LAST_SECONDS = 300;
 const QUARTER_SECONDS = 600;
-function refreshPlan(m, part) {
+const SLEEP_MAX = 6 * 3600;
+const AFTER_END_SECONDS = 3 * 3600; // marge de correccions després de l'inici del partit
+const startOf = (x) => x.date + (x.time ?? 10 * 3600); // date = dia (UTC) + time = segons del dia (UTC); sense hora → a les 10:00
+const clampSleep = (secs) => Math.round(Math.min(SLEEP_MAX, Math.max(SLOW, secs)));
+
+function sleepUntilNext(list, m, teamId) {
+  const now = Date.now() / 1000;
+  const next = list
+    .filter((x) => x.id_team_local === teamId && !x.finalized && x.id !== m.id)
+    .map(startOf).filter((t) => t > now).sort((a, b) => a - b)[0];
+  return clampSleep(next ? next - 300 - now : SLEEP_MAX);
+}
+
+function refreshPlan(m, part, list, teamId) {
+  const now = Date.now() / 1000;
   const period = m.period ?? 0;
   const crono = m.crono ?? 0;
-  if (m.finalized) return part === 'first' ? 0 : SLOW; // el primer temps és tancat; el final es revisa cada 5 min per correccions
-  if (!m.live) return SLOW; // encara no ha començat
+  if (m.finalized) {
+    if (part === 'first') return sleepUntilNext(list, m, teamId);
+    return now < startOf(m) + AFTER_END_SECONDS ? SLOW : sleepUntilNext(list, m, teamId); // el final es revisa cada 5 min un temps
+  }
+  if (!m.live) {
+    const toStart = startOf(m) - now;
+    return toStart > 600 ? clampSleep(toStart - 300) : SLOW; // encara no ha començat: dorm fins 5 min abans
+  }
   if (part === 'first') {
-    if (period >= 3) return crono >= QUARTER_SECONDS ? BREAK : 0; // descans (3r quart sense començar) → seguim; rellotge en marxa → fix
+    if (period >= 3) return crono >= QUARTER_SECONDS ? BREAK : sleepUntilNext(list, m, teamId); // descans → seguim; rellotge en marxa → fix
     if (period === 2) return crono === 0 ? BREAK : crono <= LAST_SECONDS ? FAST : SLOW;
     return SLOW;
   }
@@ -203,10 +224,12 @@ export async function getScreenData({ token, match, part = 'first', team }) {
   if (!token) throw new Error('Falta ACB_TOKEN');
   const key = `${teamId}:${part}:${match || 'auto'}`;
   const hit = cache.get(key);
-  if (hit && Date.now() - hit.at < (hit.data.refresh === 0 ? FROZEN_MS : hit.data.refresh >= SLOW ? SLOW_CACHE_MS : CACHE_MS)) return hit.data;
+  if (hit && Date.now() - hit.at < (hit.data.refresh >= SLOW ? SLOW_CACHE_MS : CACHE_MS)) return hit.data;
 
   const list = await acb(token, 'Matches', { idTeam: teamId });
-  const m = match ? list.find((x) => String(x.id) === String(match)) : pickMatch(list);
+  // Només partits com a local (els de visitant no es mostren ni es consulten); si no n'hi ha, tots
+  const home = list.filter((x) => x.id_team_local === teamId);
+  const m = match ? list.find((x) => String(x.id) === String(match)) : pickMatch(home.length ? home : list);
   if (!m) throw new Error("No s'ha trobat cap partit");
 
   const lleidaLocal = m.id_team_local === teamId;
@@ -254,7 +277,7 @@ export async function getScreenData({ token, match, part = 'first', team }) {
     matchId: m.id,
     part,
     status: statusLabel(m),
-    refresh: refreshPlan(m, part),
+    refresh: refreshPlan(m, part, list, teamId),
     game: {
       lleida: teamInfo(lleidaLocal ? m.local_team : m.visitor_team),
       rival: teamInfo(lleidaLocal ? m.visitor_team : m.local_team),

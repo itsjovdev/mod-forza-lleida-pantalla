@@ -4,7 +4,7 @@ import { getScreenData } from './_lib/screen.js';
 export default async function handler(req, res) {
   try {
     const data = await getScreenData({ token: process.env.ACB_TOKEN, match: req.query.match, team: req.query.team, part: req.query.part === 'final' ? 'final' : 'first' });
-    res.setHeader('Cache-Control', data.refresh === 0 ? 's-maxage=3600' : 's-maxage=10, stale-while-revalidate=60'); // refresh 0 = dades tancades
+    res.setHeader('Cache-Control', data.refresh >= 300 ? 's-maxage=60' : 's-maxage=10, stale-while-revalidate=60'); // fases lentes: caché més llarga
     res.status(200).json(data);
   } catch (err) {
     res.setHeader('Cache-Control', 'no-store');
