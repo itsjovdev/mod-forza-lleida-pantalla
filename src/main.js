@@ -33,7 +33,7 @@ const stage = document.getElementById('stage');
 const scenes = ['scene-logo', 'scene-score', 'scene-mvp'].map((id) => document.getElementById(id));
 // Pantalla de tirs del MVP (primer temps a /, partit sencer a /final), l'última de la seqüència
 const shotsScene = document.getElementById('scene-shots');
-const MIN_SHOTS = Number(params.get('minshots')) || 5; // amb menys tirs amb coordenades, la pantalla se salta
+const MIN_SHOTS = Number(params.get('minshots')) || 1; // amb menys tirs amb coordenades, la pantalla se salta
 let shotsAnim = []; // update(t) de cada cara de la pantalla de tirs
 // ?mirror=1 → mapa de tirs emmirallat (esquerra ↔ dreta), per si la convenció de posY de l'API fos la contrària
 const MIRROR = params.get('mirror') === '1';
