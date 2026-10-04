@@ -48,13 +48,14 @@ function statusLabel(m) {
 }
 
 // Cada quants segons ha de tornar a preguntar el navegador. Només es consulten els partits com a LOCAL de l'equip.
-// crono = segons que queden del quart. Als darrers 5 minuts de la part, cada minut; abans, cada 5 minuts.
+// crono = segons que queden del quart. Als darrers 5 minuts de la part (i 5 min després), cada 10 s; abans, cada 5 minuts.
 // En tancar-se les dades (primer temps passat / partit acabat) el valor es queda fix i el navegador "dorm" fins
 // 5 minuts abans del proper partit local (màxim 6 h, per si l'ACB canvia l'horari).
 // Marge per a revisions de l'àrbitre i correccions: el primer temps només es tanca quan el 3r quart ja ha
 // començat de debò, i el final se segueix revisant cada 5 min fins a ~3 h després de l'inici.
 const SLOW = 300;
-const FAST = 60;
+const FAST = 10;
+const AFTER_PART_SECONDS = 300; // després del final del 2n quart, seguim cada FAST per pillar la correcció de l'ACB
 const BREAK = 120;
 const LAST_SECONDS = 300;
 const QUARTER_SECONDS = 600;
@@ -71,6 +72,8 @@ function sleepUntilNext(list, m, teamId) {
   return clampSleep(next ? next - 300 - now : SLEEP_MAX);
 }
 
+const partEndSeen = new Map(); // id partit → instant en què hem vist el final del 2n quart (a la memòria; si es perd, es reinicia el marge)
+
 function refreshPlan(m, part, list, teamId) {
   const now = Date.now() / 1000;
   const period = m.period ?? 0;
@@ -85,7 +88,11 @@ function refreshPlan(m, part, list, teamId) {
   }
   if (part === 'first') {
     if (period >= 3) return crono >= QUARTER_SECONDS ? BREAK : sleepUntilNext(list, m, teamId); // descans → seguim; rellotge en marxa → fix
-    if (period === 2) return crono === 0 ? BREAK : crono <= LAST_SECONDS ? FAST : SLOW;
+    if (period === 2) {
+      if (crono !== 0) return crono <= LAST_SECONDS ? FAST : SLOW;
+      if (!partEndSeen.has(m.id)) partEndSeen.set(m.id, now);
+      return now - partEndSeen.get(m.id) < AFTER_PART_SECONDS ? FAST : BREAK;
+    }
     return SLOW;
   }
   // final: darrers 5 minuts del 4t quart (o pròrroga) i fins que l'ACB el doni per acabat, cada minut
